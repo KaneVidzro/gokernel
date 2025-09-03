@@ -5,7 +5,7 @@ DOMAIN ?= $(shell grep DOMAIN .env | cut -d '=' -f2)
 EMAIL  ?= $(shell grep SERVER_EMAIL .env | cut -d '=' -f2)
 
 
-DOCKER_COMPOSE = docker compose
+DOCKER_COMPOSE = docker compose -f docker/docker-compose.yml
 
 # ========================
 # Docker / Services

@@ -4,10 +4,10 @@ services:
   api:
     restart: always
     build:
-      context: .
+      context: ..
       dockerfile: docker/Dockerfile.api
     container_name: gokernel-api
-    env_file: .env
+    env_file: ../.env
     expose:
       - "8080"
     networks:
@@ -16,10 +16,10 @@ services:
   grpc:
     restart: always
     build:
-      context: .
+      context: ..
       dockerfile: docker/Dockerfile.grpc
     container_name: gokernel-grpc
-    env_file: .env
+    env_file: ../.env
     expose:
       - "50051"
     networks:
@@ -66,7 +66,7 @@ services:
     restart: always
     image: postgres:17
     container_name: gokernel-db
-    env_file: .env
+    env_file: ../.env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -82,7 +82,7 @@ services:
     restart: always
     image: redis:7
     container_name: gokernel-redis
-    env_file: .env
+    env_file: ../.env
     ports:
       - "${REDIS_PORT}:6379"
     networks:
