@@ -1,0 +1,35 @@
+# ========================
+# Build stage
+# ========================
+FROM golang:1.22-alpine AS builder
+WORKDIR /app
+
+# Install build tools
+RUN apk add --no-cache git
+
+# Cache dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source and build static gRPC binary
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o grpc ./cmd/grpc
+
+# ========================
+# Runtime stage
+# ========================
+FROM alpine:3.19
+WORKDIR /app
+
+# Install certificates for HTTPS/TLS connections
+RUN apk --no-cache add ca-certificates
+
+# Copy compiled gRPC binary
+COPY --from=builder /app/grpc .
+
+# Create and use non-root user
+RUN adduser -D -u 10002 grpcuser
+USER grpcuser
+
+EXPOSE 50051
+CMD ["./grpc"]

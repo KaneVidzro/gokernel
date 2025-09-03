@@ -1,0 +1,58 @@
+# Redirect all HTTP to HTTPS, but keep .well-known/acme-challenge available
+server {
+    listen 80;
+    server_name ${DOMAIN};
+
+    # Let’s Encrypt challenge
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name ${DOMAIN};
+
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    # REST API
+    location / {
+        proxy_pass http://api:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # Native gRPC
+    location /grpc {
+        grpc_pass grpc://grpc:50051;
+    }
+
+    # gRPC-Web
+    location /grpc-web {
+        grpc_pass grpc://grpc:50051;
+        grpc_set_header Host $host;
+        grpc_set_header X-Real-IP $remote_addr;
+        grpc_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        grpc_set_header Content-Type application/grpc-web;
+
+        add_header Access-Control-Allow-Origin * always;
+        add_header Access-Control-Allow-Headers "Content-Type,x-grpc-web" always;
+        add_header Access-Control-Allow-Methods "POST, OPTIONS" always;
+
+        if ($request_method = OPTIONS) {
+            add_header Content-Length 0;
+            add_header Content-Type text/plain;
+            return 204;
+        }
+    }
+}

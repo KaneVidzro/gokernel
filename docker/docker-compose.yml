@@ -1,0 +1,96 @@
+version: "3.9"
+
+services:
+  api:
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: gokernel-api
+    env_file: .env
+    expose:
+      - "8080"
+    networks:
+      - gokernel-net
+
+  grpc:
+    restart: always
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.grpc
+    container_name: gokernel-grpc
+    env_file: .env
+    expose:
+      - "50051"
+    networks:
+      - gokernel-net
+
+  nginx:
+    restart: always
+    image: nginx:1.25
+    container_name: gokernel-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template:ro
+      - ./nginx/html:/var/www/html
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    environment:
+      - DOMAIN=${DOMAIN}
+    command: >
+      sh -c "envsubst '$$DOMAIN' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf &&
+             nginx -g 'daemon off;'"
+    depends_on:
+      - api
+      - grpc
+    networks:
+      - gokernel-net
+
+  certbot:
+    image: certbot/certbot
+    container_name: gokernel-certbot
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - ./nginx/html:/var/www/html
+    entrypoint: >
+      sh -c "trap exit TERM;
+             while :; do
+               certbot renew --webroot -w /var/www/html --quiet;
+               sleep 12h & wait $${!};
+             done;"
+    networks:
+      - gokernel-net
+
+  db:
+    restart: always
+    image: postgres:17
+    container_name: gokernel-db
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    networks:
+      - gokernel-net
+
+  redis:
+    restart: always
+    image: redis:7
+    container_name: gokernel-redis
+    env_file: .env
+    ports:
+      - "${REDIS_PORT}:6379"
+    networks:
+      - gokernel-net
+
+networks:
+  gokernel-net:
+    driver: bridge
+
+volumes:
+  pgdata:
