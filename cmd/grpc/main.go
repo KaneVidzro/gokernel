@@ -11,9 +11,8 @@ import (
 func main() {
     logger.Init()
 
-    grpcPort := "50051" // hardcoded gRPC port
-
-    lis, err := net.Listen("tcp", ":"+grpcPort)
+ 
+    lis, err := net.Listen("tcp", ":50051")
     if err != nil {
         logger.L().Fatal("Failed to listen", zap.Error(err))
     }
@@ -21,7 +20,7 @@ func main() {
     grpcServer := grpc.NewServer()
     // pb.RegisterUserServiceServer(grpcServer, &UserService{})
 
-    logger.L().Info("Starting gRPC server", zap.String("port", grpcPort))
+    logger.L().Info("Starting gRPC server on port 50051")
     if err := grpcServer.Serve(lis); err != nil {
         logger.L().Fatal("Failed to serve gRPC", zap.Error(err))
     }

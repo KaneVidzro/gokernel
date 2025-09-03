@@ -17,6 +17,9 @@ type Config struct {
 	// Redis
 	RedisHost string
 	RedisPort string
+
+	// JWT
+	JWTSecret string
 }
 
 func Load() *Config {
@@ -28,6 +31,7 @@ func Load() *Config {
 		DBName:    getEnv("POSTGRES_DB", "gokernel-db"),
 		RedisHost: getEnv("REDIS_HOST", "localhost"),
 		RedisPort: getEnv("REDIS_PORT", "6379"),
+		JWTSecret: getEnv("JWT_SECRET", "your_super_secret_key"),
 	}
 	return cfg
 }

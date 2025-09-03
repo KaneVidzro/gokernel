@@ -3,26 +3,17 @@ package routes
 import (
 	"database/sql"
 
-	"github.com/redis/go-redis/v9"
-
 	"github.com/gin-gonic/gin"
-	"github.com/kanevidzro/gokernel/api/handlers"
+	v1 "github.com/kanevidzro/gokernel/api/routes/v1"
+	v2 "github.com/kanevidzro/gokernel/api/routes/v2"
+	"github.com/kanevidzro/gokernel/pkg/config"
+	"github.com/redis/go-redis/v9"
 )
 
-func RegisterRoutes(r *gin.Engine, db *sql.DB, redis *redis.Client)  {
+func RegisterRoutes(r *gin.Engine, db *sql.DB, redis *redis.Client, cfg *config.Config) {
+    v1Group := r.Group("/v1")
+    v1.Register(v1Group, db, redis, cfg)
 
-	    h := &handlers.Handler{
-        DB:    db,
-        Redis: redis,
-    }
-	// Healthcheck
-	r.GET("/health", h.HealthCheck)
-
-	// User handler
-	userHandler := handlers.NewUserHandler(db)
-
-	v1 := r.Group("/v1")
-	{
-		v1.GET("/users/:id", userHandler.GetUser)
-	}
+    v2Group := r.Group("/v2")
+    v2.Register(v2Group)
 }
