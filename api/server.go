@@ -44,7 +44,8 @@ func NewServer(logger *zap.Logger, cfg *config.Config) (*Server, error) {
 	r.Use(middleware.RequestLogger(logger))
 
 	// Routes
-	routes.RegisterRoutes(r, db)
+	routes.RegisterRoutes(r, db, rdb)
+
 
 	return &Server{
 		engine: r,

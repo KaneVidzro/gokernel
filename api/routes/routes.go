@@ -3,13 +3,20 @@ package routes
 import (
 	"database/sql"
 
+	"github.com/redis/go-redis/v9"
+
 	"github.com/gin-gonic/gin"
 	"github.com/kanevidzro/gokernel/api/handlers"
 )
 
-func RegisterRoutes(r *gin.Engine, db *sql.DB) {
+func RegisterRoutes(r *gin.Engine, db *sql.DB, redis *redis.Client)  {
+
+	    h := &handlers.Handler{
+        DB:    db,
+        Redis: redis,
+    }
 	// Healthcheck
-	r.GET("/health", handlers.HealthCheck)
+	r.GET("/health", h.HealthCheck)
 
 	// User handler
 	userHandler := handlers.NewUserHandler(db)

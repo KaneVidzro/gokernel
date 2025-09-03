@@ -19,12 +19,15 @@ func RequestLogger(logger *zap.Logger) gin.HandlerFunc {
 		latency := time.Since(start)
 		status := c.Writer.Status()
 
-		logger.Info("HTTP request",
-			zap.Int("status", status),
-			zap.String("method", c.Request.Method),
-			zap.String("path", c.Request.URL.Path),
-			zap.String("client_ip", c.ClientIP()),
-			zap.Duration("latency", latency),
-		)
+logger.Info("HTTP request",
+    zap.Int("status", status),
+    zap.String("method", c.Request.Method),
+    zap.String("path", c.Request.URL.Path),
+    zap.String("client_ip", c.ClientIP()),
+    zap.String("user_agent", c.Request.UserAgent()),
+    zap.String("referer", c.Request.Referer()),
+    zap.Duration("latency", latency),
+)
+
 	}
 }
