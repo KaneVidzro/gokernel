@@ -56,7 +56,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
         Name:     req.Name,
         Email:    req.Email,
         Password: hashed,
-        Role:     "user",
+        Role:     "user", // enforce default role
     }
 
     if err := h.Service.UserRepo.CreateUser(newUser); err != nil {
@@ -88,7 +88,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
         return
     }
 
-    token, jti, err := GenerateToken(userRecord.ID)
+    token, jti, err := GenerateToken(userRecord)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
         return

@@ -2,6 +2,9 @@ package v1
 
 import (
 	"database/sql"
+	"time"
+
+	"github.com/kanevidzro/gokernel/internal/admin"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kanevidzro/gokernel/internal/auth"
@@ -28,6 +31,7 @@ func Register(r *gin.RouterGroup, db *sql.DB, redis *redis.Client, cfg *config.C
 
     // Auth routes
     authGroup := r.Group("/auth")
+    authGroup.Use(auth.RateLimitMiddleware(redis, 15, time.Minute)) // 15 requests per minute
     {
         authGroup.POST("/register", authHandler.Register)
         authGroup.POST("/login", authHandler.Login)
@@ -42,4 +46,19 @@ func Register(r *gin.RouterGroup, db *sql.DB, redis *redis.Client, cfg *config.C
     {
         protected.GET("/users/:id", userHandler.GetUser)
     }
+
+
+adminService := &admin.Service{UserRepo: userRepo}
+adminHandler := &admin.Handler{Service: adminService}
+
+admin := r.Group("/admin")
+admin.Use(auth.AuthRequired([]byte(cfg.JWTSecret)), auth.RequireRole("admin"))
+{
+    admin.GET("/dashboard", adminHandler.Dashboard)
+    admin.GET("/users", adminHandler.ListUsers)
+    admin.PUT("/users/:id/role", adminHandler.UpdateRole)
+    admin.POST("/users/:id/deactivate", adminHandler.DeactivateUser)
+}
+
+
 }

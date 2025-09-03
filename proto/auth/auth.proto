@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "github.com/kanevidzro/gokernel/proto/auth;auth";
+
+service AuthService {
+  rpc ValidateToken (TokenRequest) returns (TokenClaims);
+}
+
+message TokenRequest {
+  string token = 1;
+}
+
+message TokenClaims {
+  string user_id = 1;
+  string role = 2;
+  bool valid = 3;
+}

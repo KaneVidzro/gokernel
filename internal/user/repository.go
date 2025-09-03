@@ -49,3 +49,46 @@ func (r *Repository) CreateUser(u *User) error {
     `, u.Email, u.Password, u.Role)
     return err
 }
+
+func (r *Repository) GetAll() ([]*User, error) {
+    rows, err := r.DB.Query("SELECT id, email, role FROM users")
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var users []*User
+    for rows.Next() {
+        var u User
+        if err := rows.Scan(&u.ID, &u.Email, &u.Role); err != nil {
+            return nil, err
+        }
+        users = append(users, &u)
+    }
+    return users, nil
+}
+
+
+
+func (r *Repository) SetRole(userID, role string) error {
+    _, err := r.DB.Exec("UPDATE users SET role = ? WHERE id = ?", role, userID)
+    return err
+}
+
+func (r *Repository) SetActive(userID string, active bool) error {
+    _, err := r.DB.Exec("UPDATE users SET active = ? WHERE id = ?", active, userID)
+    return err
+}
+
+func (r *Repository) CountUsers() (int, error) {
+    var count int
+    err := r.DB.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
+    return count, err
+}
+
+func (r *Repository) CountByRole(role string) (int, error) {
+    var count int
+    err := r.DB.QueryRow("SELECT COUNT(*) FROM users WHERE role = ?", role).Scan(&count)
+    return count, err
+}
+
