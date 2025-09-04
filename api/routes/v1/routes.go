@@ -4,12 +4,12 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/kanevidzro/gokernel/internal/admin"
-
 	"github.com/gin-gonic/gin"
+	"github.com/kanevidzro/gokernel/internal/admin"
 	"github.com/kanevidzro/gokernel/internal/auth"
 	"github.com/kanevidzro/gokernel/internal/user"
 	"github.com/kanevidzro/gokernel/pkg/config"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -18,6 +18,9 @@ func Register(r *gin.RouterGroup, db *sql.DB, redis *redis.Client, cfg *config.C
     r.GET("/health", func(c *gin.Context) {
         c.JSON(200, gin.H{"status": "ok"})
     })
+
+    // Prometheus metrics
+    r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
     // Repositories and services
     userRepo := &user.Repository{DB: db}
