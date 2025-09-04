@@ -4,27 +4,31 @@
 DOMAIN ?= $(shell grep DOMAIN .env | cut -d '=' -f2)
 EMAIL  ?= $(shell grep SERVER_EMAIL .env | cut -d '=' -f2)
 
-
 DOCKER_COMPOSE = docker compose -f docker/docker-compose.yml
+MAILU_COMPOSE = docker compose -f docker/mailu/docker-compose.yml
 
 # ========================
 # Docker / Services
 # ========================
 
 .PHONY: up
-up: ## Build and start all services
+up: ## Start all services including Mailu
 	$(DOCKER_COMPOSE) up -d --build
+	$(MAILU_COMPOSE) up -d
+
 
 .PHONY: down
-down: ## Stop and remove all services
+down: ## Stop and remove all services including Mailu
 	$(DOCKER_COMPOSE) down
+	$(MAILU_COMPOSE) down
 
 .PHONY: restart
-restart: down up ## Restart all services
+restart: down up ## Restart all services including Mailu
 
 .PHONY: logs
-logs: ## Tail logs from all containers
-	$(DOCKER_COMPOSE) logs -f
+logs: ## Tail logs from all containers including Mailu
+	$(DOCKER_COMPOSE) logs -f &
+	$(MAILU_COMPOSE) logs -f
 
 .PHONY: ps
 ps: ## Show running containers
@@ -52,9 +56,9 @@ PROTO_OUT = proto
 .PHONY: proto
 proto: ## Generate gRPC + protobuf Go code
 	protoc -I=$(PROTO_SRC) \
-		--go_out=$(PROTO_OUT) --go_opt=paths=source_relative \
-		--go-grpc_out=$(PROTO_OUT) --go-grpc_opt=paths=source_relative \
-		$(PROTO_SRC)/*.proto
+	    --go_out=$(PROTO_OUT) --go_opt=paths=source_relative \
+	    --go-grpc_out=$(PROTO_OUT) --go-grpc_opt=paths=source_relative \
+	    $(PROTO_SRC)/*.proto
 
 # ========================
 # SSL / Certbot
@@ -63,8 +67,8 @@ proto: ## Generate gRPC + protobuf Go code
 .PHONY: cert-init
 cert-init: ## One-time: request initial Let's Encrypt certificate
 	$(DOCKER_COMPOSE) run --rm certbot certonly --webroot \
-		-w /var/www/html \
-		-d $(DOMAIN) --email $(EMAIL) --agree-tos --no-eff-email
+	    -w /var/www/html \
+	    -d $(DOMAIN) --email $(EMAIL) --agree-tos --no-eff-email
 
 .PHONY: cert-renew
 cert-renew: ## Force renew all certificates
@@ -97,3 +101,15 @@ lint: ## Run golangci-lint (requires install)
 .PHONY: test
 test: ## Run all Go tests with coverage
 	go test ./... -cover
+
+# ========================
+# Mailu
+# ========================
+
+.PHONY: mailu-up
+mailu-up: ## Start only Mailu services
+	$(MAILU_COMPOSE) up -d
+
+.PHONY: mailu-down
+mailu-down: ## Stop only Mailu services
+	$(MAILU_COMPOSE) down

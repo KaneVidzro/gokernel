@@ -61,3 +61,6 @@ proto/*.grpc.pb.go
 *.bak
 *.tmp
 *.lock
+
+## Mailu
+docker/mailu/*.env
